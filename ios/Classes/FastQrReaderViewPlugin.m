@@ -102,7 +102,8 @@ AVCaptureMetadataOutputObjectsDelegate>
     
     //    NSLog(@"QR Code: %@", [_captureMetadataOutput availableMetadataObjectTypes]);
     
-    [_captureMetadataOutput setMetadataObjectTypes:@[AVMetadataObjectTypeQRCode]];
+    //    [_captureMetadataOutput setMetadataObjectTypes:@[AVMetadataObjectTypeQRCode]];
+    [_captureMetadataOutput setMetadataObjectTypes: _captureMetadataOutput.availableMetadataObjectTypes];
     [_captureMetadataOutput setMetadataObjectsDelegate:self queue:dispatchQueue];
     
     return self;
@@ -117,14 +118,26 @@ AVCaptureMetadataOutputObjectsDelegate>
 }
 
 - (void)captureOutput:(AVCaptureOutput *)output didOutputMetadataObjects:(NSArray<__kindof AVMetadataObject *> *)metadataObjects fromConnection:(AVCaptureConnection *)connection {
-    if (metadataObjects != nil && [metadataObjects count] > 0) {
-        AVMetadataMachineReadableCodeObject *metadataObj = [metadataObjects objectAtIndex:0];
-        if ([[metadataObj type] isEqualToString:AVMetadataObjectTypeQRCode]) {
-            if (_isScanning) {
-                [self performSelectorOnMainThread:@selector(stopScanningWithResult:) withObject:[metadataObj stringValue] waitUntilDone:NO];
-            }
+    if (!_isScanning || metadataObjects == nil) {
+        return;
+    }
+    for (AVMetadataObject *obj in metadataObjects) {
+        if ([obj isKindOfClass:[AVMetadataMachineReadableCodeObject class]]) {
+            AVMetadataMachineReadableCodeObject *metadataObj = (AVMetadataMachineReadableCodeObject *)obj;
+            NSString *code = [metadataObj stringValue];
+//            NSLog(@"scanned code %@", code);
+            [self performSelectorOnMainThread:@selector(stopScanningWithResult:) withObject:code waitUntilDone:NO];
+            break;
         }
     }
+//    if (metadataObjects != nil && [metadataObjects count] > 0) {
+//        AVMetadataMachineReadableCodeObject *metadataObj = [metadataObjects objectAtIndex:0];
+//        if ([[metadataObj type] isEqualToString:AVMetadataObjectTypeQRCode]) {
+//            if (_isScanning) {
+//                [self performSelectorOnMainThread:@selector(stopScanningWithResult:) withObject:[metadataObj stringValue] waitUntilDone:NO];
+//            }
+//        }
+//    }
 }
 
 
